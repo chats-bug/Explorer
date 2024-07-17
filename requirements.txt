@@ -1,0 +1,11 @@
+gitignore_parser==0.1.11
+matplotlib==3.9.1
+monitors4codegen==0.0.1
+networkx==3.3
+openai==1.3.3
+plotly==5.22.0
+pydantic==2.8.2
+python-dotenv==1.0.1
+pyvis==0.3.2
+questionary==2.0.1
+rich==13.7.1
