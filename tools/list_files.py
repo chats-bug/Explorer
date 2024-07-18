@@ -32,13 +32,14 @@ class ListFiles(BaseTool):
     include_documentation: bool = Field(
         False, description="Whether to include the documentation of the file."
     )
+    depth: int = Field(0, description="The depth to list down files in a directory.", exclude=True)
 
     def run(self, *args):
         try:
             exclude = (
                 # ["children"]
-                (["documentation"] if not self.include_documentation else [])
-                + (["summary"] if not self.include_summary else [])
+                    (["documentation"] if not self.include_documentation else [])
+                    + (["summary"] if not self.include_summary else [])
             )
             logger.debug(f"Excluding: {exclude}")
             if target_doc := find_doc(self.root_doc, self.directory):
@@ -65,24 +66,25 @@ class ListFiles(BaseTool):
             logger.critical(e)
             return {"success": False, "response": e.__str__()}
 
-    @staticmethod
-    def _format_output(files_and_dirs: List[Dict], level: int = 0):
+    def _format_output(self, files_and_dirs: List[Dict], level: int = 0):
         formatted_output = []
         for file_or_dir in files_and_dirs:
             if os.path.isfile(file_or_dir["path"]):
                 formatted_output.append(f"- [File]: {file_or_dir['path']}")
             else:
                 formatted_children_output = []
-                if file_or_dir["children"]:
-                    formatted_children_output = ListFiles._format_output(
+                if file_or_dir["children"] and level < self.depth:
+                    formatted_children_output = self._format_output(
                         file_or_dir["children"],
                         level=level + 1,
                     )
-                formatted_str = f"> [Dir]: {file_or_dir['path']}"
                 if formatted_children_output:
+                    formatted_str = f"v [Dir]: {file_or_dir['path']}"
                     formatted_str += ":"
                     for child_str in formatted_children_output:
                         formatted_str += "\n" + "\t" * (level + 1) + child_str
+                else:
+                    formatted_str = f"> [Dir]: {file_or_dir['path']}"
                 formatted_output.append(formatted_str)
 
         return formatted_output

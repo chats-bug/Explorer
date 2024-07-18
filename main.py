@@ -51,12 +51,16 @@ def main():
     ).ask()
 
     if agent_to_run == "Exploration Agent":
-        response = run_exploration_agent(root_doc=root_doc, user_prompt=user_input, directory=directory)
-        console.print(response)
+        exploration_agent = ExplorationAgent(root_doc=root_doc)
+        response = exploration_agent.run(user_prompt=user_input, directory=directory)
+        console.print(exploration_agent.code_flow_graph)
+        console.print(exploration_agent.finish_response)
         return
     else:
         context_collector_agent = ContextCollectorAgent(root_doc=root_doc)
-        response = context_collector_agent.run(directory=directory, user_input=user_input)
+        response = context_collector_agent.run(
+            directory=directory, user_input=user_input
+        )
         console.print(response["response"])
 
 

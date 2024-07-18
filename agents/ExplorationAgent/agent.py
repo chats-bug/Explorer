@@ -18,16 +18,14 @@ class ExplorationAgent:
         self.max_retries = max_retries
         self.max_iters = 50
 
-        self.system_prompt = open(
-            "agents/prompts/exploration_prompt.txt"
-        ).read()
+        self.system_prompt = open("agents/prompts/exploration_prompt.txt").read()
         self.list_files_tool = ListFiles(root_doc=root_doc, directory="")
         self.tools_dictionary = {
             "list_files": ListFiles,
             "read_file": ReadCode,
             "read_code_snippet": ReadCodeSnippet,
-            "lsp": LSPUtils,
-            "finish": Finish
+            # "lsp": LSPUtils,
+            "finish": Finish,
         }
         self.code_flow_graph = None
         self.finish_response = None
@@ -63,7 +61,9 @@ class ExplorationAgent:
                     ),
                 )
                 response = json.loads(unparsed_response["content"])
-                messages.append({"role": "assistant", "content": unparsed_response["content"]})
+                messages.append(
+                    {"role": "assistant", "content": unparsed_response["content"]}
+                )
                 num_tries = 0
             except Exception as e:
                 logger.error(f"Error in chat completion: {e}")
@@ -75,8 +75,12 @@ class ExplorationAgent:
                 raise e
 
             self.code_flow_graph = response.get("exploration", None)
-            logger.debug(f"[bold bright_white on #5f00ff]   🐳 Code Flow Graph   [/]  \n{self.code_flow_graph}\n")
-            logger.debug(f"[bold bright_white on #C738BD]   🧠 Thought   [/]  \n{response['thought']}\n")
+            logger.debug(
+                f"[bold bright_white on #5f00ff]   🐳 Code Flow Graph   [/]  \n{self.code_flow_graph}\n"
+            )
+            logger.debug(
+                f"[bold bright_white on #C738BD]   🧠 Thought   [/]  \n{response['thought']}\n"
+            )
 
             tool_name = response["tool"]
             logger.debug(f"[bold bright_white on blue]   🛠️ Tool   [/] \n{tool_name}")
@@ -87,19 +91,21 @@ class ExplorationAgent:
                 break
             tool = self.tools_dictionary.get(tool_name, None)
             if tool is None:
-                observation = f"## Observation\nStatus: False\nResponse: Tool not found."
+                observation = (
+                    f"## Observation\nStatus: False\nResponse: Tool not found."
+                )
             else:
                 tool_instance = tool(
                     **response["tool_args"],
                     root_doc=self.root_doc,
                 )
                 res = tool_instance.run()
-                observation = (
-                    f"## Observation\nStatus: {res['success']}\nResponse: {res['response']}"
-                )
+                observation = f"## Observation\nStatus: {res['success']}\nResponse: {res['response']}"
 
             messages.append({"role": "user", "content": observation})
-            logger.debug(f"\n[bold bright_white on dark_green]   🔍 Observation   [/] \n{observation}\n")
+            logger.debug(
+                f"\n[bold bright_white on dark_green]   🔍 Observation   [/] \n{observation}\n"
+            )
 
         if num_tries == self.max_retries:
             raise MaxIterationsReached(num_iters)
