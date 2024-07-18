@@ -1,15 +1,18 @@
 from typing import List, Optional, Union
 from config.settings import Config
 from openai import OpenAI
+
+from .base_llm import BaseLLM
 from .base_types import OpenAiChatModels, OpenAIDecodingArguments, ModelType
 
 
-class OpenAiModel:
+class OpenAiLLM(BaseLLM):
     def __init__(
         self,
         model: Union[OpenAiChatModels, str],
         config: Config,
     ):
+        super().__init__(model=model, config=config)
         self.api_key = config.openai_api_key
         self.model = model
         self.model_name = model.value if isinstance(model, OpenAiChatModels) else model
@@ -33,21 +36,21 @@ class OpenAiModel:
             if self.model.type == ModelType.TEXT:
                 return self._text_completion(
                     client=client,
-                    model_name=self.model.value,
+                    model_name=self.model_name,
                     messages=messages,
                     decoding_args=decoding_args,
                 )
             elif self.model.type == ModelType.IMAGE:
                 return self._vision_completion(
                     client=client,
-                    model_name=self.model.value,
+                    model_name=self.model_name,
                     messages=messages,
                     decoding_args=decoding_args,
                 )
             elif self.model.type == ModelType.IMAGE_GENERATION:
                 return self._image_generation(
                     client=client,
-                    model_name=self.model.value,
+                    model_name=self.model_name,
                     prompt=messages[0],
                     **kwargs,
                 )
@@ -66,7 +69,7 @@ class OpenAiModel:
     ):
         try:
             response = client.chat.completions.create(
-                model=model_name, messages=messages, **(decoding_args.__dict__)
+                model=model_name, messages=messages, **decoding_args.__dict__
             )
             content = response.choices[0].message.content
             return {"response": response, "content": content}
@@ -83,7 +86,7 @@ class OpenAiModel:
     ):
         try:
             response = client.chat.completions.create(
-                model=model_name, messages=messages, **(decoding_args.__dict__)
+                model=model_name, messages=messages, **decoding_args.__dict__
             )
             content = response.choices[0].message.content
             return {"response": response, "content": content}
@@ -102,6 +105,7 @@ class OpenAiModel:
             # get the response_format from kwargs
             response_format = kwargs["response_format"]
             response = client.images.generate(model=model_name, prompt=prompt, **kwargs)
+            content = ""
             if response_format == "url":
                 content = response.data[0].url
             elif response_format == "b64":
