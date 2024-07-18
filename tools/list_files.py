@@ -32,14 +32,16 @@ class ListFiles(BaseTool):
     include_documentation: bool = Field(
         False, description="Whether to include the documentation of the file."
     )
-    depth: int = Field(0, description="The depth to list down files in a directory.", exclude=True)
+    depth: int = Field(
+        1, description="The depth to list down files in a directory.", exclude=True
+    )
 
     def run(self, *args):
         try:
             exclude = (
                 # ["children"]
-                    (["documentation"] if not self.include_documentation else [])
-                    + (["summary"] if not self.include_summary else [])
+                (["documentation"] if not self.include_documentation else [])
+                + (["summary"] if not self.include_summary else [])
             )
             logger.debug(f"Excluding: {exclude}")
             if target_doc := find_doc(self.root_doc, self.directory):
