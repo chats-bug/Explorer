@@ -27,10 +27,12 @@ class ListFiles(BaseTool):
         "", description="The file extension to filter files by.", exclude=True
     )
     include_summary: bool = Field(
-        False, description="Whether to include the summary of the file."
+        False, description="Whether to include the summary of the file.", exclude=True
     )
     include_documentation: bool = Field(
-        False, description="Whether to include the documentation of the file."
+        False,
+        description="Whether to include the documentation of the file.",
+        exclude=True,
     )
     depth: int = Field(
         1, description="The depth to list down files in a directory.", exclude=True
