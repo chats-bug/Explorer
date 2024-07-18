@@ -49,13 +49,28 @@ def main():
         use_indicator=True,
         style=questionary.Style([("highlighted", "fg:#FF9D00 bold reverse")]),
     ).ask()
+    model_choice = questionary.select(
+        "Select the model to use:",
+        choices=[
+            Separator("---- Models ----"),
+            "OpenAI: GPT-4O",
+            "Anthropic: Claude 3.5 Sonnet",
+        ],
+        pointer="👉",
+        use_indicator=True,
+        style=questionary.Style([("highlighted", "fg:#FF9D00 bold reverse")]),
+    ).ask()
 
     if agent_to_run == "Exploration Agent":
-        exploration_agent = ExplorationAgent(root_doc=root_doc)
+        exploration_agent = ExplorationAgent(
+            root_doc=root_doc, use_openai="OpenAI" in model_choice
+        )
         response = exploration_agent.run(user_prompt=user_input, directory=directory)
         console.print(exploration_agent.code_flow_graph)
         console.print(exploration_agent.finish_response)
-        return
+        console.print(f"ACTION GRAPH: {len(exploration_agent.action_graph)}")
+        for action in exploration_agent.action_graph:
+            console.print(f"{action['action']}: {action['args']}")
     else:
         context_collector_agent = ContextCollectorAgent(root_doc=root_doc)
         response = context_collector_agent.run(
