@@ -4,13 +4,13 @@ from config import config
 from utils.doc import Doc
 from lib import logger
 from tools import ListFiles
-from llms import OpenAiModel, OpenAiChatModels, OpenAIDecodingArguments
+from llms import OpenAiLLM, OpenAiChatModels, OpenAIDecodingArguments
 
 
 class ContextCollectorAgent:
     def __init__(self, root_doc: Doc, max_retries: int = 5):
         self.model = OpenAiChatModels.GPT_4O
-        self.llm = OpenAiModel(model=self.model, config=config)
+        self.llm = OpenAiLLM(model=self.model, config=config)
         self.root_doc = root_doc
         self.max_retries = max_retries
         self.max_iters = 50
