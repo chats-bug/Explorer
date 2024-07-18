@@ -30,7 +30,9 @@ def is_repo_module(
 ) -> bool:
     current_dir = os.path.dirname(os.path.abspath(current_file_path))
     repo_root = root_path or find_repo_root(current_dir)
-    logger.debug(f"🔵 Repo root: {repo_root}; Current dir: {current_dir}")
+    logger.debug(
+        f"🔵 Module Name: {module_name}; Repo root: {repo_root}; Current dir: {current_dir}"
+    )
 
     if repo_root is None:
         return False
@@ -39,10 +41,12 @@ def is_repo_module(
     for i in range(len(module_parts), 0, -1):
         partial_path_1 = os.path.join(repo_root, *module_parts[:i])
         partial_path_2 = os.path.join(current_dir, *module_parts[:i])
-        logger.debug(f"🔵 Partial path: {partial_path_1}")
+        logger.debug(f"🔵 Partial path: {partial_path_1}, {partial_path_2}")
 
         # Check for .py file
-        if os.path.isfile(partial_path_1 + ".py") or os.path.isfile(partial_path_2 + ".py"):
+        if os.path.isfile(partial_path_1 + ".py") or os.path.isfile(
+            partial_path_2 + ".py"
+        ):
             return True
 
         # Check for directory with __init__.py
@@ -103,9 +107,7 @@ def categorize_import(
         ...
 
 
-def get_imports(
-    path: str, root_path: Optional[str] = None
-) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+def get_imports(path: str, root_path: Optional[str] = None):
     if not path.endswith(".py"):
         return {}, {}
 
@@ -158,6 +160,8 @@ def get_imports(
 def build_call_graph(entry_point: str, base_path: str) -> nx.DiGraph:
     G = nx.DiGraph()
     visited = set()
+    # make sure base path is an absolute path
+    base_path = os.path.abspath(base_path)
 
     def process_file(file_path: str, level=0):
         if file_path in visited:
@@ -168,9 +172,9 @@ def build_call_graph(entry_point: str, base_path: str) -> nx.DiGraph:
         G.add_node(relative_path)
 
         repo_modules, _ = get_imports(file_path, base_path)
-        if repo_modules:
-            logger.info(f"[bold green] PROCESSING: [/] {file_path} // {base_path}")
-        else:
+        # if repo_modules:
+        #     logger.info(f"[bold green] PROCESSING: [/] {file_path} // {base_path}")
+        if not repo_modules:
             logger.info(f"[bold red] NO MODULES: [/] {file_path} // {base_path}")
         for module_name, import_dict in repo_modules.items():
             # TODO: Extend to handle other languages as well
@@ -193,118 +197,26 @@ def build_call_graph(entry_point: str, base_path: str) -> nx.DiGraph:
 
             lsp_tool.request_type = LSPRequestTypes.DEFINITION
             lsp_result = lsp_tool.run()
-            logger.info(
-                f"[bold gray10]FETCH DEFINITION[/]: {module_name} ; Level ({level}); LSP Result: {lsp_result['success']}"
-            )
+            # logger.info(
+            #     f"[bold gray10]FETCH DEFINITION[/]: {module_name} ; Level ({level}); LSP Result: {lsp_result['success']}"
+            # )
             if lsp_result["success"]:
-                G.add_node(lsp_result["response"][0]["relativePath"])
+                node = os.path.relpath(
+                    lsp_result["response"][0]["absolutePath"], base_path
+                )
+                G.add_node(node)
                 G.add_edge(
                     relative_path,
-                    lsp_result["response"][0]["relativePath"],
+                    node,
                     imports=import_dict["imports"],
                 )
                 logger.info(
-                    f"[bold cyan]PROCESS INFO:[/] {module_name} ; Going into {lsp_result['response'][0]['relativePath']}"
+                    f"EDGE: {relative_path} -> {node} [{import_dict['imports']}]"
                 )
-                process_file(lsp_result["response"][0]["relativePath"], level=level + 1)
+                process_file(lsp_result["response"][0]["absolutePath"], level=level + 1)
 
-    process_file(entry_point)
+    process_file(os.path.abspath(entry_point))
     return G
-
-
-def visualize_graph_plotly(G: nx.DiGraph):
-    pos = nx.spring_layout(G, k=0.9, iterations=50)
-
-    edge_x = []
-    edge_y = []
-    for edge in G.edges():
-        x0, y0 = pos[edge[0]]
-        x1, y1 = pos[edge[1]]
-        edge_x.extend([x0, x1, None])
-        edge_y.extend([y0, y1, None])
-
-    edge_trace = go.Scatter(
-        x=edge_x,
-        y=edge_y,
-        line=dict(width=0.5, color="#888"),
-        hoverinfo="none",
-        mode="lines",
-    )
-
-    node_x = []
-    node_y = []
-    for node in G.nodes():
-        x, y = pos[node]
-        node_x.append(x)
-        node_y.append(y)
-
-    node_trace = go.Scatter(
-        x=node_x,
-        y=node_y,
-        mode="markers+text",
-        hoverinfo="text",
-        marker=dict(
-            showscale=True,
-            colorscale="YlGnBu",
-            size=20,
-            colorbar=dict(
-                thickness=15,
-                title="Node Connections",
-                xanchor="left",
-                titleside="right",
-            ),
-        ),
-        text=[os.path.basename(node) for node in G.nodes()],
-        textposition="top center",
-    )
-
-    node_adjacencies = []
-    for node, adjacencies in G.adjacency():
-        node_adjacencies.append(len(adjacencies))
-
-    node_trace.marker.color = node_adjacencies
-    node_trace.marker.size = [10 + 5 * adj for adj in node_adjacencies]
-
-    fig = go.Figure(
-        data=[edge_trace, node_trace],
-        layout=go.Layout(
-            title="Call Graph",
-            titlefont_size=16,
-            showlegend=False,
-            hovermode="closest",
-            margin=dict(b=20, l=5, r=5, t=40),
-            annotations=[
-                dict(
-                    text="",
-                    showarrow=False,
-                    xref="paper",
-                    yref="paper",
-                    x=0.005,
-                    y=-0.002,
-                )
-            ],
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        ),
-    )
-
-    # Add edge labels (imports)
-    for edge in G.edges(data=True):
-        x0, y0 = pos[edge[0]]
-        x1, y1 = pos[edge[1]]
-        logger.debug(f"Edge: {edge}")
-        imports = ""
-        for imp in edge[2]["imports"]:
-            imports += f"{imp[0]} as {imp[1]}, " if imp[1] else f"{imp[0]}, "
-        fig.add_annotation(
-            x=(x0 + x1) / 2,
-            y=(y0 + y1) / 2,
-            text=imports,
-            showarrow=False,
-            font=dict(size=8),
-        )
-
-    fig.show()
 
 
 def navigate_dependencies():
@@ -361,18 +273,18 @@ def navigate_dependencies():
 
 if __name__ == "__main__":
     # navigate_dependencies()
-    entry_point = "workspace/todo/main.py"
-    base_path = "workspace/todo"
+    entry_point = "main.py"
+    base_path = os.path.abspath(".")
     G = build_call_graph(entry_point=entry_point, base_path=base_path)
     console.print(G.nodes())
     # visualize_graph_plotly(G)
 
-    os.makedirs(
-        f"saved_states/call_graphs/{entry_point.split('/', -1)[0]}", exist_ok=True
-    )
-    with open(f"saved_states/call_graphs/superagi_main_py.gpickle", "wb") as f:
+    # os.makedirs(
+    #     f"saved_states/call_graphs/{entry_point.split('/', -1)[0]}", exist_ok=True
+    # )
+    with open(f"saved_states/call_graphs/ex_main_py.gpickle", "wb") as f:
         pickle.dump(G, f, pickle.HIGHEST_PROTOCOL)
-    
+
     # entry_point = "workspace/todo/website/__init__.py"
     # base_path = "workspace/todo/"
     # repo_modules, python_packages = get_imports(entry_point, base_path)
