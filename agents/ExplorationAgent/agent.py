@@ -5,15 +5,32 @@ from utils.doc import Doc
 from lib import logger
 from tools import ListFiles, ReadCode, ReadCodeSnippet, LSPUtils, Finish
 from tools.utils import generate_tools_subprompt
-from llms import OpenAiModel, OpenAiChatModels, OpenAIDecodingArguments
+from llms import (
+    OpenAiLLM,
+    OpenAiChatModels,
+    OpenAIDecodingArguments,
+    AnthropicLLM,
+    AnthropicDecodingArguments,
+    AnthropicModels,
+)
 
 from agents import MaxIterationsReached
 
 
 class ExplorationAgent:
-    def __init__(self, root_doc: Doc, max_retries: int = 5):
-        self.model = OpenAiChatModels.GPT_4O
-        self.llm = OpenAiModel(model=self.model, config=config)
+    def __init__(self, root_doc: Doc, max_retries: int = 5, use_openai: bool = True):
+        if use_openai:
+            self.model = OpenAiChatModels.GPT_4O
+            self.llm = OpenAiLLM(model=self.model, config=config)
+            self.decoding_args = OpenAIDecodingArguments(
+                temperature=0.5, response_format={"type": "json_object"}
+            )
+        else:
+            self.model = AnthropicModels.CLAUDE_3_5_SONNET_20240620
+            self.llm = AnthropicLLM(model=self.model, config=config)
+            self.decoding_args = AnthropicDecodingArguments(
+                temperature=0.5, max_tokens=4000
+            )
         self.root_doc = root_doc
         self.max_retries = max_retries
         self.max_iters = 50
@@ -30,7 +47,10 @@ class ExplorationAgent:
         self.code_flow_graph = None
         self.finish_response = None
 
+        self.action_graph = []
+
     def run(self, directory: str, user_prompt: str):
+        self.action_graph = []
         self.list_files_tool.directory = directory
         files_list = self.list_files_tool.run()
         if files_list["success"]:
@@ -40,10 +60,14 @@ class ExplorationAgent:
         system_prompt = self.system_prompt.format(
             INITIAL_REPO_MAP=files_list,
             AVAILABLE_TOOLS=generate_tools_subprompt(self.tools_dictionary),
+            USER_REQUEST=user_prompt,
         )
 
         messages = [
-            {"role": "system", "content": system_prompt},
+            {
+                "role": "system",
+                "content": system_prompt,
+            },
             {"role": "user", "content": user_prompt},
         ]
 
@@ -56,10 +80,9 @@ class ExplorationAgent:
             try:
                 unparsed_response = self.llm.chat(
                     messages,
-                    decoding_args=OpenAIDecodingArguments(
-                        temperature=0.5, response_format={"type": "json_object"}
-                    ),
+                    decoding_args=self.decoding_args,
                 )
+                logger.debug(f"Unparsed Response: {unparsed_response['content']}")
                 response = json.loads(unparsed_response["content"])
                 messages.append(
                     {"role": "assistant", "content": unparsed_response["content"]}
@@ -105,6 +128,12 @@ class ExplorationAgent:
             messages.append({"role": "user", "content": observation})
             logger.debug(
                 f"\n[bold bright_white on dark_green]   🔍 Observation   [/] \n{observation}\n"
+            )
+            self.action_graph.append(
+                {
+                    "action": tool_name,
+                    "args": response["tool_args"],
+                }
             )
 
         if num_tries == self.max_retries:
