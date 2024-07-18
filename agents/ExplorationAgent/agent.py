@@ -35,7 +35,7 @@ class ExplorationAgent:
         self.max_retries = max_retries
         self.max_iters = 50
 
-        self.system_prompt = open("agents/prompts/exploration_prompt.txt").read()
+        self.instructions_prompt = open("agents/prompts/exploration_prompt.txt").read()
         self.list_files_tool = ListFiles(root_doc=root_doc, directory="")
         self.tools_dictionary = {
             "list_files": ListFiles,
@@ -57,10 +57,14 @@ class ExplorationAgent:
             files_list = files_list["response"]
         else:
             raise Exception("Failed to list files")
-        system_prompt = self.system_prompt.format(
+        instructions_prompt = self.instructions_prompt.format(
             INITIAL_REPO_MAP=files_list,
             AVAILABLE_TOOLS=generate_tools_subprompt(self.tools_dictionary),
             USER_REQUEST=user_prompt,
+        )
+        system_prompt = (
+            "You are an AI assistant tasked with exploring a code repository and providing insights based "
+            "on a user's request."
         )
 
         messages = [
@@ -68,11 +72,11 @@ class ExplorationAgent:
                 "role": "system",
                 "content": system_prompt,
             },
-            {"role": "user", "content": user_prompt},
+            {"role": "user", "content": instructions_prompt},
         ]
 
         logger.debug(f"System Prompt: {system_prompt}")
-        logger.debug(f"User Prompt: {user_prompt}")
+        logger.debug(f"User Prompt: {instructions_prompt}")
 
         num_iters = 0
         num_tries = 0
