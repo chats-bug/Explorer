@@ -80,3 +80,35 @@ class OpenAIDecodingArguments:
     presence_penalty: float = 0.0
     frequency_penalty: float = 0.0
     response_format: dict = field(default_factory=dict)
+
+
+class AnthropicModels(Enum):
+    CLAUDE_3_5_SONNET_20240620 = "claude-3-5-sonnet-20240620"
+    CLAUDE_3_OPUS_20240229 = "claude-3-opus-20240229"
+    CLAUDE_3_SONNET_20240229 = "claude-3-sonnet-20240229"
+    CLAUDE_3_HAIKU_20240307 = "claude-3-haiku-20240307"
+    CLAUDE_2_1 = "claude-2.1"
+    CLAUDE_2_0 = "claude-2.0"
+    CLAUDE_INSTANT_1_2 = "claude-instant-1.2"
+
+    def __str__(self):
+        return f"AnthropicModels(Model={self.value})"
+
+
+@dataclass
+class AnthropicDecodingArguments:
+    max_tokens: int = 1000
+    stop_sequences: Optional[Sequence[str]] = None
+    stream: bool = False
+    system: Optional[str] = None
+    temperature: float = 0.5
+    # tool_choice: Optional[dict] = None
+    # tools: Optional[Sequence[dict]] = None
+    top_k: int = 0
+    top_p: float = 1.0
+    # # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
+    # # The extra values given here take precedence over values defined on the client or passed to this method.
+    extra_headers: Optional[dict] = None
+    extra_query: Optional[dict] = None
+    extra_body: Optional[dict] = None
+    timeout: float = 600

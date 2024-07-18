@@ -23,18 +23,21 @@ class Config:
                 DEBUG = 10
                 NOTSET = 0
         - openai_api_key (str): API key for OpenAI.
+        - anthropic_api_key (str): API key for Anthropic.
     """
 
     console: Console = field(init=False)
     log_level_str: str = field(default="INFO")
     log_level: int = field(init=False)
     openai_api_key: str = field(init=False)
+    anthropic_api_key: str = field(init=False)
 
     def __post_init__(self):
         self.console = Console()
 
         load_dotenv()
 
-        self.openai_api_key = os.getenv("OPENAI_API_KEY")
         self.log_level_str = os.getenv("APP_LOG_LEVEL", self.log_level_str)
         self.log_level = getattr(logging, self.log_level_str.upper())
+        self.openai_api_key = os.getenv("OPENAI_API_KEY")
+        self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
