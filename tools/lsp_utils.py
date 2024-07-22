@@ -43,15 +43,16 @@ class LSPUtils(BaseTool):
         None, description="The column number of the symbol.", exclude=True
     )
     symbol: str = Field(
-        "", description="The symbol for which the request is being made. (the phrase or word in the code)"
+        ...,
+        description="The symbol for which the request is being made. (the phrase or word in the code)",
     )
     request_type: RequestTypes = Field(..., description="The type of request to make.")
 
     def run(self, *args):
         try:
-            assert (self.column_number is not None) or (
-                self.symbol.strip() != ""
-            ), "Either column_number or symbol must be provided."
+            # assert (self.column_number is not None) or (
+            #     self.symbol.strip() != ""
+            # ), "Either column_number or symbol must be provided."
 
             config = MultilspyConfig.from_dict({"code_language": self.language.value})
             lsp_logger = MultilspyLogger()

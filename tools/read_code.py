@@ -14,6 +14,9 @@ class ReadCode(BaseTool):
     start_line: int = Field(1, description="The starting line number.")
     end_line: int = Field(100, description="The ending line number.")
     lint: bool = Field(False, description="Whether to run the linter on the code.")
+    max_lines: int = Field(
+        200, description="The maximum number of lines to read.", exclude=True
+    )
 
     def run(self, *args, **kwargs):
         if 1 < self.end_line < self.start_line:
@@ -22,9 +25,9 @@ class ReadCode(BaseTool):
                 "response": "`end_line` should be greater than or equal to start_line",
             }
         feedback = ""
-        if self.end_line - self.start_line > 200:
-            self.end_line = self.start_line + 200
-            feedback = "(Code snippet too long; only 200 lines shown)"
+        if self.end_line - self.start_line > self.max_lines:
+            self.end_line = self.start_line + self.max_lines
+            feedback = f"(Code snippet too long; only {self.max_lines} lines shown)"
 
         try:
             with open(self.file_path, "r") as file:
