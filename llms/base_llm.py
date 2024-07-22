@@ -8,7 +8,7 @@
 
 from abc import ABC, abstractmethod
 from config import Config
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict
 
 
 class BaseLLM(ABC):
@@ -17,5 +17,5 @@ class BaseLLM(ABC):
         self.config = config
 
     @abstractmethod
-    def chat(self, messages: List, **kwargs) -> dict:
+    def chat(self, messages: List, decoding_args: Dict, **kwargs) -> dict:
         pass
