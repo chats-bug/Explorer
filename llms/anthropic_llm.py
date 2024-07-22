@@ -1,7 +1,8 @@
+import copy
 from typing import List, Dict, Union
 import anthropic
 
-from config import Config
+from config import Config, console
 from lib import logger
 from llms.base_llm import BaseLLM
 from llms.base_types import AnthropicDecodingArguments, AnthropicModels
@@ -19,12 +20,20 @@ class AnthropicLLM(BaseLLM):
         decoding_args: AnthropicDecodingArguments = None,
         **kwargs,
     ) -> dict:
+        # Copying the message list to avoid modifying the original list
+        # Since Claude requires the system prompt to be mentioned
+        # in the decoding args, we need to modify the messages list
+        # to remove the system message before sending it to the API
+        # No change is surfaced to the user in this way; this conforms
+        # with the openai chat method
+        messages = copy.deepcopy(messages)
         decoding_args = decoding_args or AnthropicDecodingArguments()
         try:
             if messages[0]["role"] == "system":
                 decoding_args.system = messages[0]["content"]
                 # Remove the system message from the messages list
                 messages = messages[1:]
+
             response = self.client.messages.create(
                 model=self.model_name,
                 messages=messages,
