@@ -20,58 +20,79 @@ To complete this task, follow these steps:
 
 3. As you explore, keep track of the files and functions that seem relevant to the user's request. Pay attention to import statements, function calls, and any other indicators of code flow between files and functions. You can simply call the `lsp` tool to jump to the definition of any function, variable, or imports. So while exploring be sure to use the `lsp` tool to quickly follow relevant imports.
 
-4. Create a code flow graph based on your exploration. This graph should show:
+4. Create a code flow graph based on your exploration.The graph should in be in Mermaid format and should represent the following relationships:
    a. File-to-file relationships
    b. Function-to-function relationships within and across files
-   To represent this graph in text format, use the following structure:
+   To represent this graph in text format, use the following structure syntax:
    <code_flow_graph>
-   File: file_name_1
-     -> file_name_2 (reason for connection)
-     Function: function_name_1
-       -> function_name_2 in file_name_2 (reason for connection)
-   File: file_name_2
-     -> file_name_3 (reason for connection)
-     Function: function_name_2
-       -> function_name_3 in file_name_3 (reason for connection)
+   graph TD
+
+    %% Defining files and their functions
+    subgraph FileA[File A]
+        A_func1[Function A1]
+        A_func2[Function A2]
+    end
+
+    subgraph FileB[File B]
+        B_func1[Function B1]
+        B_func2[Function B2]
+    end
+
+    subgraph FileC[File C]
+        C_func1[Function C1]
+        C_func2[Function C2]
+    end
+
+    %% File-to-File Relationships
+    FileA --> FileB
+    FileB --> FileC
+    FileC --> FileA
+
+    %% Functions within and across files relationships
+    A_func1 --> A_func2
+    B_func1 --> B_func2
+    C_func1 --> C_func2
+
+    A_func1 --> B_func1
+    B_func2 --> C_func1
+    C_func2 --> A_func2
    </code_flow_graph>
 
 5. Compile a list of relevant files based on your exploration and the code flow graph. Include a brief explanation of why each file is relevant to the user's request.
 
-6. Present your findings in the following format:
-   <exploration>
-       <explanation>
-           - Explanation of the feature workings.
-           - Bullet points and detailed flow of the feature.
-       </explanation>
-       <code_flow_graph>
-            (Insert the code flow graph here)
-       </code_flow_graph>
-
-       <relevant_files>
-            1. file_name_1: Brief explanation of relevance
-            2. file_name_2: Brief explanation of relevance
-            (Continue list as needed)
-       </relevant_files>
-
-       <similar_feature_dirs>
-            1. dir_name_1: Similar feature explanation
-                - file_name_1: Brief explanation of relevance
-                - file_name_2: Brief explanation of relevance
-            2. dir_name_2: Similar feature explanation
-                - file_name_3: Brief explanation of relevance
-                - file_name_4: Brief explanation of relevance
-            (Continue list as needed)
-       </similar_feature_dirs>
-   </exploration>
+6. Your findings will have the following components:
+   {{
+        "explanation": "- Explanation of the feature workings.\n- Bullet points and detailed flow of the feature.",
+        "code_flow_graph": "(Insert the code flow graph here)",
+        "relevant_files": [
+            "file_name_1: Brief explanation of relevance",
+            "file_name_2: Brief explanation of relevance",
+            "(Continue list as needed)"
+        ],
+        "similar_feature_dirs": [
+            {{
+                "dir_name_1": "Similar feature explanation",
+                "files": [
+                    "file_name_1: Brief explanation of relevance",
+                    "file_name_2: Brief explanation of relevance",
+                    "(Continue list as needed)"
+                ]
+            }},
+            {{
+                "dir_name_2": "Similar feature explanation",
+                "files": [
+                    "file_name_3: Brief explanation of relevance",
+                    "file_name_4: Brief explanation of relevance",
+                    "(Continue list as needed)"
+                ]
+            }},
+            "(Continue list as needed)"
+        ]
+   }}
+   To update your findings or add something new, always call the {CONTEXT_UPDATE_TOOL_NAME} tool with the proper arguments.
 
 7. Always respond in the following JSON format:
 {{
-    "exploration": {{
-        "explanation": "<explanation>",
-        "code_flow_graph": "<code_flow_graph>",
-        "relevant_files": ["<relevant_files>"],
-        "similar_feature_dirs": ["<similar_feature_dirs>"]
-    }},
     "thought": "<think about your next action>",
     "tool": "<tool_name>",
     "tool_args": "<tool_arguments>",
@@ -83,18 +104,11 @@ To complete this task, follow these steps:
 
 Remember to use the available tools as much as necessary to gather comprehensive information about the repository and accurately address the user's request. If you need to make assumptions or if there's uncertainty about certain aspects of the code structure, state these clearly in your response.
 ALSO ALWAYS RESPOND ONLY IN THE JSON FORMAT:
-- "exploration" should contain the explanation, code flow graph, relevant files, and similar feature directories.
 - "thought" should provide insight into your next steps.
 - "tool" should specify the tool you intend to use.
 - "tool_args" should detail the arguments of the tool you are using.
 Example JSON SCHEMA:
 {{
-    "exploration": {{
-        "explanation": "<explanation>",
-        "code_flow_graph": "<code_flow_graph>",
-        "relevant_files": "<relevant_files>",
-        "similar_feature_dirs": "<similar_feature_dirs>"
-    }},
     "thought": "<think about your next action>",
     "tool": "<tool_name>",
     "tool_args": "<tool_arguments>",
