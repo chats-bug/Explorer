@@ -27,6 +27,7 @@ class AnthropicLLM(BaseLLM):
         # No change is surfaced to the user in this way; this conforms
         # with the openai chat method
         messages = copy.deepcopy(messages)
+        messages = self.merge_user_messages(messages)
         decoding_args = decoding_args or AnthropicDecodingArguments()
         try:
             if messages[0]["role"] == "system":
@@ -48,3 +49,16 @@ class AnthropicLLM(BaseLLM):
         except Exception as e:
             logger.error(f"Error in chat completion: {e}")
             return {"response": None, "content": str(e)}
+
+    @staticmethod
+    def merge_user_messages(messages: List[Dict[str, str]]):
+        # if there are 2 consecutive user messages, merge them
+        merged_messages = []
+        for i, message in enumerate(messages):
+            if message["role"] in ["assistant", "system"] or messages[i - 1][
+                "role"
+            ] in ["assistant", "system"]:
+                merged_messages.append(message)
+            else:
+                merged_messages[-1]["content"] += "\n" + message["content"]
+        return merged_messages
