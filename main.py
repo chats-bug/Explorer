@@ -30,15 +30,19 @@ def run_context_collector_agent(root_doc: Doc, user_input: str, directory: str):
 
 
 def run_exploration_agent(root_doc: Doc, user_prompt: str, directory: str):
-    exploration_agent = ExplorationAgent(root_doc=root_doc)
+    exploration_agent = ExplorationAgent(root_doc=root_doc, title="Exploration Agent")
     response = exploration_agent.run(user_prompt=user_prompt, directory=directory)
     return response
 
 
 def transform_query_to_exploration_prompt(query: str, directory_overview: str):
     llm = OpenAiLLM(
-        model=OpenAiChatModels.GPT_4O,
+        model=OpenAiChatModels.GPT_4O, config=config, title="Query to Exploration"
+    )
+    an_llm = AnthropicLLM(
+        model=AnthropicModels.CLAUDE_3_5_SONNET_20240620,
         config=config,
+        title="Query to Exploration",
     )
     response = llm.chat(
         messages=[
@@ -58,13 +62,15 @@ def transform_query_to_exploration_prompt(query: str, directory_overview: str):
                 """{
                 "thought": "What should be an appropriate exploration prompt for the user feature request?",
                 "exploration_prompt: "<exploration_prompt>"
-                """,
+                }
+                RETURN ONLY THE JSON""",
             },
         ],
         decoding_args=OpenAIDecodingArguments(
-            temperature=0.5,
+            temperature=0.1,
             response_format={"type": "json_object"},
         ),
+        # decoding_args=AnthropicDecodingArguments(temperature=0.1),
     )
     response = json.loads(response["content"])
     return response["exploration_prompt"]
@@ -98,7 +104,9 @@ def run_planner_agent(
         formatted_str += (
             f"Relevant Directories:\n{exploration_context.get('similar_feature_dirs')}"
         )
-    planer_agent = PlannerAgent(root_doc=root_doc, model_provider=model_provider)
+    planer_agent = PlannerAgent(
+        root_doc=root_doc, model_provider=model_provider, title="Planner Agent"
+    )
     response = planer_agent.run(
         directory=directory,
         user_prompt=user_prompt,
@@ -158,8 +166,11 @@ def main():
         exploration_prompt = transform_query_to_exploration_prompt(
             query=user_input, directory_overview=directory_overview["response"]
         )
+        logger.info(f"Exploration Prompt: {exploration_prompt}")
         exploration_agent = ExplorationAgent(
-            root_doc=root_doc, use_openai="OpenAI" in model_choice
+            root_doc=root_doc,
+            model_provider="openai" if "OpenAI" in model_choice else "anthropic",
+            title="Exploration Agent",
         )
         response = exploration_agent.run(
             user_prompt=exploration_prompt,
