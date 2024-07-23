@@ -9,8 +9,8 @@ from llms.base_types import AnthropicDecodingArguments, AnthropicModels
 
 
 class AnthropicLLM(BaseLLM):
-    def __init__(self, model: Union[str, AnthropicModels], config: Config):
-        super().__init__(model, config)
+    def __init__(self, model: Union[str, AnthropicModels], config: Config, title: str):
+        super().__init__(model, config, title)
         self.model_name = model.value if isinstance(model, AnthropicModels) else model
         self.client = anthropic.Anthropic(api_key=config.anthropic_api_key)
 
@@ -33,12 +33,16 @@ class AnthropicLLM(BaseLLM):
                 decoding_args.system = messages[0]["content"]
                 # Remove the system message from the messages list
                 messages = messages[1:]
-
             response = self.client.messages.create(
                 model=self.model_name,
                 messages=messages,
                 **decoding_args.__dict__,
                 **kwargs,
+            )
+            self.log_tokens(
+                input_tokens=response.usage.input_tokens,
+                output_tokens=response.usage.output_tokens,
+                title=self.title,
             )
             return {"response": response, "content": response.content[0].text}
         except Exception as e:
