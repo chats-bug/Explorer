@@ -17,6 +17,7 @@ class ExplorationAgent(BaseAgent):
     def __init__(
         self,
         root_doc: Doc,
+        title: str,
         max_retries: int = 5,
         max_iters: int = 50,
         model_provider: Literal["openai", "anthropic"] = "openai",
@@ -34,6 +35,7 @@ class ExplorationAgent(BaseAgent):
             return_type="json_object",
             max_retries=max_retries,
             max_iters=max_iters,
+            title=title,
         )
 
         self.root_doc = root_doc

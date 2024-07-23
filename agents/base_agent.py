@@ -22,28 +22,36 @@ class BaseAgent(ABC):
         model: Union[OpenAiChatModels, AnthropicModels],
         config: Config,
         return_type: Literal["json_object", "text"],
+        title: str,
         max_retries: int = 5,
         max_iters: int = 50,
     ):
         self.llm_expected_return_type = return_type
         if isinstance(model, OpenAiChatModels):
             self.model = model
-            self.llm: BaseLLM = OpenAiLLM(model=self.model, config=config)
+            self.llm: BaseLLM = OpenAiLLM(model=self.model, config=config, title=title)
             self.decoding_args = OpenAIDecodingArguments(
                 temperature=0.5, response_format={"type": return_type}, max_tokens=4096
             )
         elif isinstance(model, AnthropicModels):
             self.model = model
-            self.llm: BaseLLM = AnthropicLLM(model=self.model, config=config)
+            self.llm: BaseLLM = AnthropicLLM(
+                model=self.model, config=config, title=title
+            )
             self.decoding_args = AnthropicDecodingArguments(
                 temperature=0.5, max_tokens=4096
             )
         else:
             raise ValueError("Invalid model type")
 
+        self.title = title
         self.config = config
         self.max_retries = max_retries
         self.max_iters = max_iters
+
+        self.context_window_tokens = 0
+        self.prompt_tokens = 0
+        self.completion_tokens = 0
 
         self.tools_dictionary: Dict[str, Type[BaseTool]] = {"finish": Finish}
         self.finish_response = None
@@ -55,6 +63,18 @@ class BaseAgent(ABC):
     def get_model(self) -> str:
         return str(self.model)
 
+    @staticmethod
+    def _get_request_tokens(
+        response,
+        model: Union[OpenAiChatModels, AnthropicModels],
+    ):
+        if isinstance(model, OpenAiChatModels):
+            return response.usage.prompt_tokens, response.usage.completion_tokens
+        elif isinstance(model, AnthropicModels):
+            return response.usage.input_tokens, response.usage.output_tokens
+        else:
+            raise ValueError("Invalid model provider")
+
     def get_llm_response(
         self, messages: List[Dict[str, str]], parse_response: bool = True, **kwargs
     ) -> Tuple[str, Optional[Dict]]:
@@ -65,8 +85,19 @@ class BaseAgent(ABC):
                 response = self.llm.chat(
                     messages=messages, decoding_args=self.decoding_args, **kwargs
                 )
+                prompt_tokens, completion_tokens = 0, 0
+                try:
+                    prompt_tokens, completion_tokens = self._get_request_tokens(
+                        response["response"], self.model
+                    )
+                    self.prompt_tokens += prompt_tokens
+                    self.completion_tokens += completion_tokens
+                except ValueError as vae:
+                    pass
                 if self.llm_expected_return_type == "json_object" and parse_response:
                     parsed_response_object = json.loads(response["content"])
+
+                self.context_window_tokens += prompt_tokens + completion_tokens
                 return response["content"], parsed_response_object
             except json.JSONDecodeError as jde:
                 logger.error(f"Error parsing LLM Response: {jde}")
@@ -114,12 +145,12 @@ class BaseAgent(ABC):
                     f"Error running tool {tool_name} with args {tool_args}: {e}"
                 )
 
-        logger.debug(f"[bold bright_white on blue]   🛠️ Tool   [/] \n{tool_name}")
+        logger.debug(f"[bold bright_white on blue_violet]  🛠️ Tool   [/]")
+        logger.debug(f"{tool_name}")
         for arg, value in tool_args.items():
             logger.debug(f"  - {arg}: {value}")
-        logger.debug(
-            f"\n[bold bright_white on dark_green]   🔍 Observation   [/] \n{observation}\n"
-        )
+        logger.debug(f"[bold bright_white on dark_green]  🔍 Observation   [/]")
+        logger.debug(f"{observation}")
         if tool_name == "finish":
             self.finish_response = tool_args
         return observation, tool_name == "finish"
