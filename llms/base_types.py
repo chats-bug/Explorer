@@ -41,32 +41,32 @@ class OpenAiChatModels(Enum):
         return ModelType.TEXT
 
     @property
-    def token_limit(self) -> int:
+    def token_limit(self) -> Tuple[int, int]:
         # Do a match case here
         match self.value:
-            case ["gpt-4-turbo", "gpt-4-1106-preview", "gpt-4o"]:
-                return (128_000, 4096)
+            case "gpt-4-turbo" | "gpt-4-1106-preview" | "gpt-4o":
+                return 128_000, 4096
             case "gpt-4-32k":
-                return (32_000, 32_000)
+                return 32_000, 32_000
             case "gpt-4":
-                return (8_192, 8_192)
-            case ["gpt-3.5-turbo-1106", "gpt-3.5-turbo-0125"]:
-                return (16_385, 4095)
+                return 8_192, 8_192
+            case "gpt-3.5-turbo-1106" | "gpt-3.5-turbo-0125":
+                return 16_385, 4095
             case "gpt-3.5-turbo":
-                return (4_096, 4_096)
+                return 4_096, 4_096
 
     @property
     def cost_per_1000(self) -> Tuple[float, float]:
         if "gpt-4" in self.value:
             # Model belongs to GPT-4 family
             if "32k" in self.value:
-                return (0.06, 0.12)
-            return (0.03, 0.06)
+                return 0.06, 0.12
+            return 0.03, 0.06
         else:
             # Model belongs to GPT-3.5 family
             if "16k" in self.value:
-                return (0.003, 0.004)
-            return (0.0015, 0.002)
+                return 0.003, 0.004
+            return 0.0015, 0.002
 
 
 @dataclass
@@ -87,12 +87,16 @@ class AnthropicModels(Enum):
     CLAUDE_3_OPUS_20240229 = "claude-3-opus-20240229"
     CLAUDE_3_SONNET_20240229 = "claude-3-sonnet-20240229"
     CLAUDE_3_HAIKU_20240307 = "claude-3-haiku-20240307"
-    CLAUDE_2_1 = "claude-2.1"
-    CLAUDE_2_0 = "claude-2.0"
-    CLAUDE_INSTANT_1_2 = "claude-instant-1.2"
 
     def __str__(self):
         return f"AnthropicModels(Model={self.value})"
+
+    @property
+    def token_limit(self) -> Tuple[int, int]:
+        if "claude-3-5" in self.value:
+            return 200_000, 8192
+        if "claude-3" in self.value:
+            return 200_000, 4096
 
 
 @dataclass
