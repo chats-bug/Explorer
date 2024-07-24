@@ -45,7 +45,6 @@ class ListFiles(BaseTool):
                 (["documentation"] if not self.include_documentation else [])
                 + (["summary"] if not self.include_summary else [])
             )
-            logger.debug(f"Excluding: {exclude}")
             if target_doc := find_doc(self.root_doc, self.directory):
                 target_files = []
                 for child in target_doc.children:
@@ -53,7 +52,11 @@ class ListFiles(BaseTool):
                     if child.path.endswith(self.file_extension):
                         # logger.debug(f"File extension matched: {self.file_extension}")
                         target_files.append(
-                            {k: v for k, v in child.dict().items() if k not in exclude}
+                            {
+                                k: v
+                                for k, v in child.model_dump().items()
+                                if k not in exclude
+                            }
                         )
                         target_files[-1]["type"] = (
                             "file" if os.path.isfile(child.path) else "directory"
@@ -77,7 +80,7 @@ class ListFiles(BaseTool):
                 formatted_output.append(f"- [File]: {file_or_dir['path']}")
             else:
                 formatted_children_output = []
-                if file_or_dir["children"] and level < self.depth:
+                if file_or_dir["children"] and (level < self.depth or self.depth == -1):
                     formatted_children_output = self._format_output(
                         file_or_dir["children"],
                         level=level + 1,
