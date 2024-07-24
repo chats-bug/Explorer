@@ -126,10 +126,9 @@ def run_planner_agent(
 
 def main():
     questionary.print("Welcome to the New Context Agent!")
-    # root_path = questionary.path("Enter the root path of the project:").ask()
-    # root_path = os.path.abspath(root_path)
-    root_path = "workspace/SuperAGI"
-    with console.status("[bold green] Generating documentation..."):
+    root_path = questionary.path("Enter the root path of the project:").ask()
+    root_path = os.path.abspath(root_path)
+    with console.status("[bold green] Fetching documentation..."):
         root_doc = get_doc(root_path)
 
     user_input = questionary.text("Enter the feature description:").ask()
