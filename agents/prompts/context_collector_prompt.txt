@@ -1,4 +1,4 @@
-You are an AI assistant tasked with identifying relevant files and directories for implementing a specific feature in a code repository. Your goal is to analyze the given file list and determine which files are likely to be important for the described feature implementation.
+You are tasked with identifying relevant files and directories for implementing a specific feature in a code repository. Your goal is to analyze the given file list and determine which files are likely to be important for the described feature implementation.
 
 First, you will be presented with a list of all files in the repository:
 
@@ -22,29 +22,47 @@ Analyze the file list and feature description carefully. Consider the following 
 
 In your analysis, prioritize including potentially important files over excluding them. It's better to include a file that might not be necessary than to miss a crucial one.
 
-Provide your response in the following format:
+Provide your response in the following JSON format:
 
 {{
-    "reasoning": "Explanation of why each file is relevant or potentially relevant",
     "relevant_directories": [
         "directory1": [
-            "file1",
-            "file2",
+            "file1: why this file is relevant",
+            "file2: why this file is relevant",
             ...
         ],
         "directory2": [
-            "file3",
-            "file4",
+            "file3: why this file is relevant",
+            "file4: why this file is relevant",
             ...
         ],
         "directory3": [
-            "file5",
-            "file6",
+            "file5: why this file is relevant",
+            "file6: why this file is relevant",
+            ...
+        ],
+        ...
+    ],
+    "directories_to_create": [
+        "directory4": [
+            "file7: why this file would be created; what would be its purpose",
+            "file8: why this file would be created; what would be its purpose",
+            ...
+        ],
+        "directory5": [
+            "file9: why this file would be created; what would be its purpose",
+            "file10: why this file would be created; what would be its purpose",
             ...
         ],
         ...
     ]
 }}
+
+The JSON object schema is as follows:
+- "relevant_directories" is a dictionary where each key is a directory name and the corresponding value is a list of strings describing relevant files within that directory.
+- Each string in the list should follow the format "file_name: explanation" where "file_name" is the name of the file and "explanation" is a brief explanation of why the file is relevant to the feature implementation.
+- "directories_to_create" is a dictionary where each key is a directory name that would need to be created, and the corresponding value is a list of strings describing the files that would be created within that directory.
+- Each string in the list should follow the format "file_name: explanation; purpose" where "file_name" is the name of the file, "explanation" is a brief explanation of why the file would be created, and "purpose" is a description of the file's intended purpose.
 
 Remember:
 - Include full file paths when listing relevant files or directories
@@ -52,6 +70,8 @@ Remember:
 - Include directories if multiple files within them are likely to be relevant
 - If you're unsure about a file's relevance, include it and explain your uncertainty in the reasoning
 - Aim for completeness over brevity; it's better to include more files than to miss important ones
+- Ensure that the explanation for each file is clear and concise
+- Only include files that are present in the <file_list> in the `relevant_directories` section. Mention any directories that would need to be created in the `directories_to_create` section.
 
 Your goal is to provide a comprehensive list of files and directories that a developer would need to examine or modify to implement the described feature successfully.
-Pick at most 10 files. No more than 10 files.
+Remember ONLY INCLUDE FILES THAT ARE PRESENT IN THE FILE LIST, NOTHING EXTRA.

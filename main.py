@@ -23,8 +23,10 @@ from llms import (
 )
 
 
-def run_context_collector_agent(root_doc: Doc, user_input: str, directory: str):
-    context_collector_agent = ContextCollectorAgent(root_doc=root_doc)
+def run_context_collector_agent(
+    root_doc: Doc, user_input: str, directory: str, title: str
+):
+    context_collector_agent = ContextCollectorAgent(root_doc=root_doc, title=title)
     response = context_collector_agent.run(directory=directory, user_input=user_input)
     return response
 
@@ -58,6 +60,7 @@ def transform_query_to_exploration_prompt(query: str, directory_overview: str):
                 "Here is the directory overview of the repository:\n"
                 f"{directory_overview}\n"
                 f"User Feature Request: {query}"
+                "Always return your exploration prompt with numbered points to clearly indicate all the things that need to be explore. \n"
                 "Reply only in the following JSON format:"
                 """{
                 "thought": "What should be an appropriate exploration prompt for the user feature request?",
@@ -116,7 +119,7 @@ def run_planner_agent(
     console.print(f"Final Plan: \n{planer_agent.plan}")
     console.print(f"Action graph: \n{json.dumps(planer_agent.action_graph, indent=4)}")
     os.makedirs("saved_states/planner", exist_ok=True)
-    with open("saved_states/planner/plan.json", "w") as f:
+    with open("saved_states/planner/plan_2.json", "w") as f:
         f.write(json.dumps(planer_agent.plan, indent=4))
     return response
 
@@ -166,6 +169,11 @@ def main():
         exploration_prompt = transform_query_to_exploration_prompt(
             query=user_input, directory_overview=directory_overview["response"]
         )
+        exploration_prompt += (
+            "\n"
+            "Always remember to note how the directory structure for this particular feature, "
+            "and how and where it is being integrated in the codebase"
+        )
         logger.info(f"Exploration Prompt: {exploration_prompt}")
         exploration_agent = ExplorationAgent(
             root_doc=root_doc,
@@ -177,18 +185,20 @@ def main():
             directory=directory,
         )
         exploration_context = exploration_agent.context
-        file_path = f"saved_states/exploration/state.json"
+        file_path = f"saved_states/exploration/state_2.json"
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "w") as f:
             f.write(json.dumps(exploration_context, indent=4))
     elif agent_to_run == "Context Collector Agent":
-        context_collector_agent = ContextCollectorAgent(root_doc=root_doc)
-        response = context_collector_agent.run(
-            directory=directory, user_input=user_input
+        response = run_context_collector_agent(
+            root_doc=root_doc,
+            user_input=user_input,
+            directory=directory,
+            title="Context Collector",
         )
         console.print(response["response"])
     else:
-        exp_file_path = "saved_states/exploration/state.json"
+        exp_file_path = "saved_states/exploration/state_2.json"
         logger.info(f"Reading exploration context {exp_file_path}")
         exploration_context = open(exp_file_path).read()
         exploration_context = json.loads(exploration_context)
