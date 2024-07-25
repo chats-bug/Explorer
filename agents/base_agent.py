@@ -108,10 +108,14 @@ class BaseAgent(ABC):
                 logger.error(f"Error generating LLM Response: {e}")
                 num_tries += 1
                 if num_tries == self.max_retries:
+                    logger.critical(f"Max retries reached: {e}.\nMessage: {messages}")
                     raise e
 
     def run_tool(
-        self, tool_name: Optional[str], tool_args: Dict, extra_args: Dict
+        self,
+        tool_name: Optional[str],
+        tool_args: Dict,
+        extra_args: Optional[Dict] = None,
     ) -> Tuple[str, bool]:
         """
         Run the tool with the given name and arguments.
@@ -135,10 +139,10 @@ class BaseAgent(ABC):
             try:
                 tool_instance = tool_class(
                     **tool_args,
-                    **extra_args,
+                    **extra_args if extra_args else {},
                 )
                 response = tool_instance.run()
-                observation = f"## Observation\nStatus: {response['success']}\nResponse: {response['response']}"
+                observation = f"## Observation\nStatus: {response['success']}\nResponse: {json.dumps(response['response'], indent=4)}"
             except Exception as e:
                 observation = f"## Observation\nStatus: False\nResponse: {str(e)}"
                 logger.error(

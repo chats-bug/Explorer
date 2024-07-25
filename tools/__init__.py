@@ -11,6 +11,7 @@ from .lsp_utils import (
     SupportedLanguages as LSPSupportedLanguages,
     RequestTypes as LSPRequestTypes,
 )
+from .dependency_manager import DependencyManager
 
 from .list_files import ListFiles
 from .file_info import FileInfo

@@ -21,6 +21,7 @@ lsp_tool = LSPUtils(
     repo_path=os.path.abspath(""),
     file_path=os.path.abspath(""),
     line_number=1,
+    symbol="",
     request_type=LSPRequestTypes.DEFINITION,
 )
 
@@ -30,9 +31,9 @@ def is_repo_module(
 ) -> bool:
     current_dir = os.path.dirname(os.path.abspath(current_file_path))
     repo_root = root_path or find_repo_root(current_dir)
-    logger.debug(
-        f"🔵 Module Name: {module_name}; Repo root: {repo_root}; Current dir: {current_dir}"
-    )
+    # logger.debug(
+    #     f"🔵 Module Name: {module_name}; Repo root: {repo_root}; Current dir: {current_dir}"
+    # )
 
     if repo_root is None:
         return False
@@ -41,7 +42,7 @@ def is_repo_module(
     for i in range(len(module_parts), 0, -1):
         partial_path_1 = os.path.join(repo_root, *module_parts[:i])
         partial_path_2 = os.path.join(current_dir, *module_parts[:i])
-        logger.debug(f"🔵 Partial path: {partial_path_1}, {partial_path_2}")
+        # logger.debug(f"🔵 Partial path: {partial_path_1}, {partial_path_2}")
 
         # Check for .py file
         if os.path.isfile(partial_path_1 + ".py") or os.path.isfile(
@@ -125,9 +126,9 @@ def get_imports(path: str, root_path: Optional[str] = None):
                 import_name = (
                     f"{module_name} as {alias.asname}" if alias.asname else module_name
                 )
-                logger.debug(
-                    f"⭕️ Module name: {module_name}; Import name: {import_name}; Line no: {line_no}"
-                )
+                # logger.debug(
+                #     f"⭕️ Module name: {module_name}; Import name: {import_name}; Line no: {line_no}"
+                # )
                 categorize_import(
                     module_name=import_name,
                     imports=None,
@@ -141,9 +142,9 @@ def get_imports(path: str, root_path: Optional[str] = None):
             module_name = node.module
             if module_name:
                 imports = [(alias.name, alias.asname) for alias in node.names]
-                logger.debug(
-                    f"🟠 Module name: {module_name}; Imports: {imports}; Line no: {node.lineno}"
-                )
+                # logger.debug(
+                #     f"🟠 Module name: {module_name}; Imports: {imports}; Line no: {node.lineno}"
+                # )
                 categorize_import(
                     module_name=module_name,
                     imports=imports,
