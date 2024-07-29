@@ -18,6 +18,12 @@ You will be working with the following input variables:
 
 The tools provided are your means to explore and understand the codebase. Each tool has specific functionality, and you should use them appropriately to gather the information you need.
 
+Plan Details:
+1. Each step of the plan is treated as an independent and sufficient action to achieve a part of the objective. It has therefore the following consequences:
+    - Each step should have a comprehensive explanation of the target. It should also contain ALL the files necessary to achieve the objective.
+    - Each step is performed by an entity, which does not have access to the whole codebase. Therefore, all possibly required files needs to be included in each step.
+2. The `reference` section in the step should be an exhaustive list of files that one would need to understand the complete context of the task without needing the whole codebase.
+
 Instructions:
 
 1. Carefully read and analyze the objective and the current plan (if any).

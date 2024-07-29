@@ -10,7 +10,7 @@ from tools import ListFiles, DependencyManager
 from llms import OpenAiChatModels, AnthropicModels
 
 
-class ContextCollectorAgent(BaseAgent):
+class FileContextEvaluatorAgent(BaseAgent):
     def __init__(
         self,
         root_doc: Doc,

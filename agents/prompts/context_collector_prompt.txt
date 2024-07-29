@@ -25,7 +25,7 @@ In your analysis, prioritize including potentially important files over excludin
 Provide your response in the following JSON format:
 
 {{
-    "create": [
+    "create": {{
         "directory1": [
             "file1: why this file would be created; what would be its purpose",
             "file2: why this file would be created; what would be its purpose",
@@ -37,8 +37,8 @@ Provide your response in the following JSON format:
             ...
         ],
         ...
-    ],
-    "relevant_directories": [
+    }},
+    "relevant_directories": {{
         "directory3": [
             "file5: why this file is relevant",
             "file6: why this file is relevant",
@@ -55,24 +55,26 @@ Provide your response in the following JSON format:
             ...
         ],
         ...
-    ]
+    }}
 }}
 
 The JSON object schema is as follows:
 - "relevant_directories" is a dictionary where each key is a directory name and the corresponding value is a list of strings describing relevant files within that directory.
 - "create" is a dictionary where each key is a directory name that would need to be created, and the corresponding value is a list of strings describing the files that would be created within that directory. **It could also contain directories that already exist but would need new files created within them.**
 - Each string in the list should follow the format "file_name: explanation" where "file_name" is the name of the file and "explanation" is a brief explanation of why the file is relevant to the feature implementation.
-- Only include files that are present in the <file_list> in the `relevant` section. Mention any directories that would need to be created in the `create` section.
+- Only include files that are present in the <file_list> in the "relevant_directories" section. Mention any directories that would need to be created in the "create" section.
 
 Remember:
 - Include full file paths when listing relevant files or directories
 - Don't modify or abbreviate file names
-- Always use the full file path in "create" and "relevant_directories" sections. For example, "directory1/file1" instead of just "file1"
 - Include directories if multiple files within them are likely to be relevant
 - If you're unsure about a file's relevance, include it and explain your uncertainty in the reasoning
 - Ensure that the explanation for each file is clear and concise
-- Only include files that are present in the <file_list> in the `relevant` section.
-- Mention any directories that would need to be created in the `create` section.
-- Only include the top 10 most relevant files
+- Aim for completeness over brevity; it's better to include more files than to miss important ones
+
+- Always use the full file path in "create" and "relevant_directories" sections. For example, "directory1/file1" instead of just "file1"
+- Only include files that are present in the <file_list> in the "relevant_directories" section.
+- Mention any directories that would need to be created in the "create" section.
+
 
 Your goal is to provide a comprehensive list of files and directories that a developer would need to examine or modify to implement the described feature successfully.

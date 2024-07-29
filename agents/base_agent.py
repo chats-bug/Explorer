@@ -142,7 +142,7 @@ class BaseAgent(ABC):
                     **extra_args if extra_args else {},
                 )
                 response = tool_instance.run()
-                observation = f"## Observation\nStatus: {response['success']}\nResponse: {json.dumps(response['response'], indent=4)}"
+                observation = f"## Observation\nStatus: {response['success']}\nResponse: {response['response']}"
             except Exception as e:
                 observation = f"## Observation\nStatus: False\nResponse: {str(e)}"
                 logger.error(
