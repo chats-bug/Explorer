@@ -17,6 +17,9 @@ class CreateCodeFile(BaseTool):
     replace: bool = Field(
         False, description="Whether to replace the file if it already exists."
     )
+    lint: bool = Field(
+        False, description="Whether to perform linting after editing.", exclude=True
+    )
 
     def run(self, *args):
         # check if the file already exists
@@ -27,16 +30,18 @@ class CreateCodeFile(BaseTool):
                 f"replace the contents.",
             }
 
+        os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
         with open(self.file_path, "w") as file:
             file.write(self.code)
 
-        try:
-            lint_result = default_linter.lint_file(self.file_path)
-        except LinterError as lin_ex:
-            return {
-                "success": False,
-                "response": f"Code has been written but linting failed. Please check the code for the following issues: {lin_ex}.",
-            }
+        if self.lint:
+            try:
+                lint_result = default_linter.lint_file(self.file_path)
+            except LinterError as lin_ex:
+                return {
+                    "success": False,
+                    "response": f"Code has been written but linting failed. Please check the code for the following issues: {lin_ex}. Re-write the code avoiding these problems.",
+                }
 
         return {
             "success": True,

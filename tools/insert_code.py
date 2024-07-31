@@ -15,6 +15,9 @@ class InsertCode(BaseTool):
         ..., description="The line number after which to insert the code."
     )
     code: str = Field(..., description="The code to insert.")
+    lint: bool = Field(
+        False, description="Whether to perform linting after editing.", exclude=True
+    )
 
     def run(self, *args):
         try:
@@ -42,13 +45,14 @@ class InsertCode(BaseTool):
         with open(self.file_path, "w") as file:
             file.writelines(edited_lines)
 
-        try:
-            lint_result = default_linter.lint_file(self.file_path)
-        except LinterError as lin_ex:
-            return {
-                "success": False,
-                "response": f"Code has been edited but linting failed. Please check the code for the following issues: {lin_ex}.",
-            }
+        if self.lint:
+            try:
+                lint_result = default_linter.lint_file(self.file_path)
+            except LinterError as lin_ex:
+                return {
+                    "success": False,
+                    "response": f"Code has been edited but linting failed. Please check the code for the following issues: {lin_ex}.",
+                }
 
         return {
             "success": True,

@@ -162,13 +162,13 @@ class Logger(metaclass=SingletonMeta):
         if len(args) > 0:
             self.logger.warning(*args)
 
-    def error(self, message, exc_info=False, *args):
-        self.logger.error(message, exc_info=exc_info)
+    def error(self, message, *args):
+        self.logger.error(message, exc_info=False)
         if len(args) > 0:
             self.logger.error(*args)
 
-    def critical(self, message, exc_info=True, *args):
-        self.logger.critical(message, exc_info=exc_info)
+    def critical(self, message, *args):
+        self.logger.critical(message, exc_info=True)
         if len(args) > 0:
             self.logger.critical(*args)
 

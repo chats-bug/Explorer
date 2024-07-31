@@ -1,5 +1,6 @@
 import ast
 from pydantic import Field
+from typing import Literal
 
 from lib import logger
 from tools import BaseTool
@@ -15,15 +16,11 @@ class ReadCodeSnippet(BaseTool):
 
     file_path: str = Field(..., description="The file path to get information about.")
     node_name: str = Field(..., description="The node name to get information about.")
-    node_type: str = Field(..., description="The node type to get information about.")
+    node_type: Literal["class", "function", "variable"] = Field(
+        ..., description="The node type to get information about."
+    )
 
     def run(self, *args):
-        if self.node_type not in ["class", "function", "variable"]:
-            return {
-                "success": False,
-                "response": f"Invalid node type '{self.node_type}'. Please choose from 'class', 'function' or "
-                f"'variable'.",
-            }
         try:
             with open(self.file_path, "r") as file:
                 code = file.read()
@@ -48,7 +45,14 @@ class ReadCodeSnippet(BaseTool):
                             "success": False,
                             "response": f"Error in reading code snippet: {read_code_tool_response['response']}",
                         }
-                    return read_code_tool_response
+                    return {
+                        "success": True,
+                        "response": {
+                            "start_line": node["line_nos"][0],
+                            "end_line": node["line_nos"][1],
+                            "code": read_code_tool_response["response"],
+                        }
+                    }
 
             # if node is not found
             return {
